@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Datos - Control de Combustible</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="admin-card">
+        <h1>Gestión de Datos</h1>
+        <p class="subtitle">Exporte, importe y administre los registros de combustible</p>
+        
+        <div class="admin-actions">
+            <div class="action-card">
+                <h3>Respaldar Datos</h3>
+                <p>Descargue los datos actuales en un archivo JSON para conservarlos.</p>
+                <button class="btn btn-primary" onclick="exportarJSON()">Descargar JSON</button>
+            </div>
+            
+            <div class="action-card">
+                <h3>Reiniciar Todo</h3>
+                <p>Borre todos los datos y comience desde cero.</p>
+                <button class="btn btn-danger" onclick="reiniciarTodo()">Reiniciar Aplicación</button>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h2>Registros del Día Actual</h2>
+            <div class="table-container">
+                <table id="tablaAdmin">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Nombre</th>
+                            <th>CI</th>
+                            <th>Litros</th>
+                            <th>Lugar</th>
+                            <th>Encargado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p id="sinRegistros" class="sin-datos" style="display:none;">No hay registros para el día actual.</p>
+        </div>
+
+        <div class="data-section">
+            <h2>Historial Semanal</h2>
+            <div id="historialAdmin" class="historial-content"></div>
+        </div>
+
+        <div class="nav-buttons">
+            <button class="btn" onclick="window.location.href='index.html'">Volver al Inicio</button>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
