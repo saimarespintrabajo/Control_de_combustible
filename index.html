@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Combustible</title>
+    <!-- Librería para exportar a Excel (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; font-family: 'Arial Black', Arial, sans-serif; }
+        
+        body { 
+            background-color: #000866; 
+            color: white; 
+            margin: 0; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+        }
+
+        /* Contenedor con formato teléfono pero centrado en PC */
+        .mobile-card {
+            width: 100%;
+            max-width: 430px;
+            background-color: #000866;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Encabezado */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .header svg { width: 45px; height: 45px; fill: white; }
+
+        .header h1 {
+            font-size: 1.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+            color: white;
+        }
+
+        /* Campos de Entrada */
+        .field-group { display: flex; flex-direction: column; gap: 5px; }
+
+        label {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 18px;
+            border-radius: 25px;
+            border: 2px solid white;
+            background-color: #000544;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            font-weight: normal;
+        }
+
+        input:focus { border-color: #3b82f6; }
+
+        /* Tarjeta Blanca Inferior */
+        .bottom-card {
+            background-color: white;
+            color: #000866;
+            border-radius: 25px;
+            padding: 20px 15px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .total-and-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .total-title {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            margin: 0;
+            line-height: 1.2;
+            color: #000866;
+        }
+
+        .total-amount {
+            font-size: 1.4rem;
+            color: #000866;
+            display: block;
+        }
+
+        .buttons-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        /* Botones Personalizados */
+        .btn {
+            background-color: white;
+            color: #000866;
+            border: 2px solid #000866;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 3px 3px 0px #000866;
+            transition: all 0.1s ease;
+        }
+
+        .btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0px #000866;
+        }
+
+        .btn-historial {
+            background-color: #000866;
+            color: white;
+        }
+
+        /* Sección de Tabla y Logo al final */
+        .footer-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 5px;
+            width: 100%;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .table-title {
+            font-size: 0.85rem;
+            margin: 0 0 5px 0;
+            color: #000866;
+            text-align: left;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
+
+        th {
+            background-color: #000866;
+            color: white;
+            padding: 6px;
+            text-align: left;
+        }
+
+        td {
+            border: 1px solid #ccc;
+            padding: 6px;
+            color: #333;
+        }
+
+        .logo-img {
+            width: 110px;
+            height: auto;
+            object-fit: contain;
+            margin-top: 5px;
+        }
+
+        /* Modal emergente para el Historial Semanal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+
+        .modal-content {
+            background-color: white;
+            color: #000866;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 400px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 { margin: 0; font-size: 1.1rem; }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #000866;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="mobile-card">
+    
+    <!-- Encabezado con Icono -->
+    <div class="header">
+        <svg viewBox="0 0 24 24">
+            <path d="M19.77,7.23,19.78,7.22,16,3.44V2A1,1,0,0,0,15,1H5A1,1,0,0,0,4,2V21a1,1,0,0,0,1,1h8a1,1,0,0,0,1-1V12h2a1,1,0,0,1,1,1v5a1,1,0,0,0,2,0V12A3,3,0,0,0,16,9H14V5.41l2.29,2.3a1,1,0,0,0,1.42,0,1,1,0,0,0,0-1.42ZM12,10H6V4h6ZM8,15h2v2H8Z"/>
+        </svg>
+        <h1>Control de Combustible</h1>
+    </div>
+
+    <!-- Formulario -->
+    <div class="field-group">
+        <label>Nombre y Apellido</label>
+        <input type="text" id="nombre">
+    </div>
+
+    <div class="field-group">
+        <label>Cédula de Identidad</label>
+        <input type="text" id="cedula">
+    </div>
+
+    <div class="field-group">
+        <label>Cantidad de Litros</label>
+        <input type="number" id="litros" step="any">
+    </div>
+
+    <div class="field-group">
+        <label>Encargado de Surtir</label>
+        <input type="text" id="encargado">
+    </div>
+
+    <div class="field-group">
+        <label>Lugar</label>
+        <input type="text" id="lugar">
+    </div>
+
+    <!-- Tarjeta Inferior -->
+    <div class="bottom-card">
+        
+        <div class="total-and-buttons">
+            <div style="flex-shrink: 0;">
+                <h2 class="total-title">Total Litros<br>Hoy:</h2>
+                <span class="total-amount" id="totalLitros">0.00 L</span>
+            </div>
+
+            <div class="buttons-group">
+                <button class="btn" onclick="guardarRegistro()">Guardar Registro</button>
+                <button class="btn" onclick="exportarExcel()">Exportar Excel (.xlsx)</button>
+                <button class="btn btn-historial" onclick="abrirHistorial()">Historial Semanal</button>
+            </div>
+        </div>
+
+        <div class="footer-info">
+            <!-- Tabla abarcando todo el largo disponible -->
+            <div class="table-container">
+                <h4 class="table-title">Registros del Día</h4>
+                <table id="tablaRegistros">
+                    <thead>
+                        <tr>
+                            <th>Hora</th>
+                            <th>Nombre</th>
+                            <th>CI</th>
+                            <th>Litros</th>
+                            <th>Lugar</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Logo posicionado SIEMPRE al final de la tarjeta -->
+            <img src="logo.png" alt="Logo" class="logo-img" onerror="this.onerror=null; this.src='logo.png.png';">
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Modal Emergente para el Historial Semanal -->
+<div class="modal" id="modalHistorial">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Historial de la Semana</h3>
+            <button class="close-btn" onclick="cerrarHistorial()">&times;</button>
+        </div>
+        <div id="contenidoHistorial">
+            <!-- Se llena dinámicamente con JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const HOY_STR = new Date().toLocaleDateString();
+
+    // Comprobar si cambió el día para reiniciar registros diarios
+    let ultimaFecha = localStorage.getItem('ultima_fecha_registro') || HOY_STR;
+    let registros = JSON.parse(localStorage.getItem('registros_combustible')) || [];
+    let historialSemanal = JSON.parse(localStorage.getItem('historial_semanal')) || {};
+
+    if (ultimaFecha !== HOY_STR) {
+        if (registros.length > 0) {
+            historialSemanal[ultimaFecha] = registros;
+            // Mantener solo los últimos 7 días en el historial
+            const fechas = Object.keys(historialSemanal);
+            if (fechas.length > 7) {
+                delete historialSemanal[fechas[0]];
+            }
+            localStorage.setItem('historial_semanal', JSON.stringify(historialSemanal));
+        }
+        registros = [];
+        localStorage.setItem('registros_combustible', JSON.stringify(registros));
+        localStorage.setItem('ultima_fecha_registro', HOY_STR);
+    }
+
+    function actualizarPantalla() {
+        const tbody = document.querySelector("#tablaRegistros tbody");
+        tbody.innerHTML = "";
+        let total = 0;
+
+        registros.forEach(r => {
+            total += parseFloat(r.Litros) || 0;
+            let hora = r.Fecha_Hora.split(',')[1] || r.Fecha_Hora; // Muestra solo la hora en la tabla rápida
+            let fila = `<tr>
+                <td>${hora.trim()}</td>
+                <td>${r.Nombre_Apellido}</td>
+                <td>${r.Cedula}</td>
+                <td>${r.Litros}</td>
+                <td>${r.Lugar}</td>
+            </tr>`;
+            tbody.innerHTML += fila;
+        });
+
+        document.getElementById("totalLitros").innerText = total.toFixed(2) + " L";
+        localStorage.setItem('registros_combustible', JSON.stringify(registros));
+    }
+
+    function guardarRegistro() {
+        const nombre = document.getElementById("nombre").value.trim();
+        const cedula = document.getElementById("cedula").value.trim();
+        const litrosInput = document.getElementById("litros").value;
+        const encargado = document.getElementById("encargado").value.trim();
+        const lugar = document.getElementById("lugar").value.trim();
+
+        if (!nombre || !cedula || !litrosInput || !encargado || !lugar) {
+            alert("Por favor, complete todos los campos.");
+            return;
+        }
+
+        const ahora = new Date();
+        const fechaHora = ahora.toLocaleString();
+
+        registros.push({
+            Fecha_Hora: fechaHora,
+            Nombre_Apellido: nombre,
+            Cedula: cedula,
+            Litros: parseFloat(litrosInput),
+            Encargado: encargado,
+            Lugar: lugar
+        });
+
+        localStorage.setItem('ultima_fecha_registro', HOY_STR);
+        actualizarPantalla();
+        
+        // Limpiar campos
+        document.getElementById("nombre").value = "";
+        document.getElementById("cedula").value = "";
+        document.getElementById("litros").value = "";
+        document.getElementById("encargado").value = "";
+        document.getElementById("lugar").value = "";
+    }
+
+    function exportarExcel() {
+        if (registros.length === 0) {
+            alert("No hay datos registrados hoy para exportar.");
+            return;
+        }
+
+        let datosExportar = [...registros];
+        let totalLitros = registros.reduce((sum, r) => sum + r.Litros, 0);
+
+        datosExportar.push({
+            Fecha_Hora: "TOTAL GENERAL",
+            Nombre_Apellido: "",
+            Cedula: "",
+            Litros: totalLitros,
+            Encargado: "",
+            Lugar: ""
+        });
+
+        const hoja = XLSX.utils.json_to_sheet(datosExportar);
+
+        hoja['!cols'] = [
+            { wch: 25 }, { wch: 22 }, { wch: 16 },
+            { wch: 12 }, { wch: 22 }, { wch: 48 }
+        ];
+
+        const libro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(libro, hoja, "Combustible");
+
+        const fechaHoy = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(libro, `Reporte_Combustible_${fechaHoy}.xlsx`);
+    }
+
+    function abrirHistorial() {
+        const contenedor = document.getElementById("contenidoHistorial");
+        contenedor.innerHTML = "";
+
+        const fechas = Object.keys(historialSemanal);
+        if (fechas.length === 0) {
+            contenedor.innerHTML = "<p style='font-size:0.9rem;'>No hay registros guardados de días anteriores esta semana.</p>";
+        } else {
+            fechas.reverse().forEach(fecha => {
+                let lista = historialSemanal[fecha];
+                let totalDia = lista.reduce((s, r) => s + r.Litros, 0);
+                let html = `<div style="border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
+                    <strong style="font-size:0.9rem;">Día: ${fecha} (Total: ${totalDia.toFixed(2)} L)</strong>
+                    <ul style="font-size:0.75rem; font-weight:normal; margin: 5px 0; padding-left: 18px;">`;
+                
+                lista.forEach(item => {
+                    html += `<li>${item.Nombre_Apellido} (${item.Cedula}) - <b>${item.Litros} L</b></li>`;
+                });
+
+                html += `</ul></div>`;
+                contenedor.innerHTML += html;
+            });
+        }
+
+        document.getElementById("modalHistorial").style.display = "flex";
+    }
+
+    function cerrarHistorial() {
+        document.getElementById("modalHistorial").style.display = "none";
+    }
+
+    // Inicializar al cargar
+    actualizarPantalla();
+</script>
+
+</body>
+</html>
